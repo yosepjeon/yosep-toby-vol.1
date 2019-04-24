@@ -24,7 +24,7 @@ public class DaoFactory {
 		dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
 		dataSource.setUrl("jdbc:mysql://localhost/toby_spring?characterEncoding=UTF-8");
 		dataSource.setUsername("enekelx1");
-		dataSource.setPassword("123");
+		dataSource.setPassword("123123");
 		
 		return dataSource;
 	}
