@@ -5,18 +5,13 @@
 
 	<bean id="userDao" class="io.yosep.toby.user.dao.UserDao" >
 		<property name="dataSource" ref="dataSource" />
-		<property name="jdbcContext" ref="jdbcContext" />
-	</bean>
-	
-	<bean id="jdbcContext" class="io.yosep.toby.user.dao.JdbcContext">
-		<property name="dataSource" ref="dataSource"/>
 	</bean>
 
 	<bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource" >
 		<property name="driverClass" value="com.mysql.jdbc.Driver" />
 		<property name="url" value="jdbc:mysql://localhost/toby_spring?characterEncoding=UTF-8" />
 		<property name="username" value="enekelx1" />
-		<property name="password" value="123123" />
+		<property name="password" value="enekeldytpq1Q@" />
 	</bean>
 
 </beans>
