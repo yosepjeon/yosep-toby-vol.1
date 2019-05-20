@@ -1,14 +1,17 @@
-package io.yosep.toby.user;
+package io.yosep.toby.user.service;
 
+import static io.yosep.toby.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
+import static io.yosep.toby.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.jws.soap.SOAPBinding.Use;
+import javax.sql.DataSource;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,13 +19,12 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import io.yosep.toby.user.dao.UserDao;
 import io.yosep.toby.user.domain.Level;
 import io.yosep.toby.user.domain.User;
 import io.yosep.toby.user.service.UserService;
-import static io.yosep.toby.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static io.yosep.toby.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -30,6 +32,8 @@ import static io.yosep.toby.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;;
 public class UserServiceTest {
 	@Autowired
 	UserService userService;
+	@Autowired
+	PlatformTransactionManager transactionManager;
 	
 	@Autowired
 	UserDao userDao;
@@ -52,7 +56,7 @@ public class UserServiceTest {
 	}
 
 	@Test
-	public void upgradeLevels()throws SQLException {
+	public void upgradeLevels()throws Exception {
 		userDao.deleteAll();
 		for(User user : users) {
 			userDao.add(user);
@@ -72,6 +76,7 @@ public class UserServiceTest {
 //		checkLevel(users.get(4), Level.GOLD);
 	}
 	
+	
 	@Test
 	public void add()throws SQLException {
 		userDao.deleteAll();
@@ -89,6 +94,25 @@ public class UserServiceTest {
 		assertThat(userWithoutLevelRead.getLevel(), is(Level.BASIC));
 	}
 	
+	@Test
+	public void upgradeAllOrNothing() throws Exception {
+		UserService testUserService = new TestUserService(users.get(3).getId());  
+		testUserService.setUserDao(this.userDao);
+		testUserService.setTransactionManager(transactionManager); 
+		
+		userDao.deleteAll();			  
+		for(User user : users) userDao.add(user);
+		
+		try {
+			testUserService.upgradeLevels();   
+			fail("TestUserServiceException expected"); 
+		}
+		catch(TestUserServiceException e) { 
+		}
+		
+		checkLevelUpgraded(users.get(1), false);
+	}
+	
 	private void checkLevel(User user, Level expectedLevel)throws SQLException {
 		User userUpdate = userDao.get(user.getId());
 		assertThat(userUpdate.getLevel(), is(expectedLevel));
@@ -104,8 +128,19 @@ public class UserServiceTest {
 		}
 	}
 	
-	private void upgradeLevel(User user) {
-		user.upgradeLevel();
-		userDao.update(user);
+	static class TestUserService extends UserService {
+		private String id;
+		
+		private TestUserService(String id) {  
+			this.id = id;
+		}
+
+		protected void upgradeLevel(User user) {
+			if (user.getId().equals(this.id)) throw new TestUserServiceException();  
+			super.upgradeLevel(user);  
+		}
+	}
+	
+	static class TestUserServiceException extends RuntimeException {
 	}
 }
