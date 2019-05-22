@@ -9,14 +9,15 @@ public class User {
 	Level level;
 	int login;
 	int recommend;
-	Date lastUpgraded;
-	
+	String email;
+
 	public User() {}
 
-	public User(String id, String name, String password,Level level, int login, int recommend) {
+	public User(String id, String name, String password,String email,Level level, int login, int recommend) {
 		this.id = id;
 		this.name= name;
 		this.password = password;
+		this.email = email;
 		this.level = level;
 		this.login = login;
 		this.recommend = recommend;
@@ -29,7 +30,6 @@ public class User {
 			throw new IllegalStateException(this.level + "은 업그레이드가 불가능합니다.");
 		}else {
 			this.level = nextLevel;
-			this.lastUpgraded = new Date();
 		}
 	}
 
@@ -79,5 +79,14 @@ public class User {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 }

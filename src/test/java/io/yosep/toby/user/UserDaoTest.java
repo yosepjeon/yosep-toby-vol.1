@@ -40,9 +40,9 @@ public class UserDaoTest {
 		DataSource dataSource = new SingleConnectionDataSource("jdbc:mysql://localhost/toby_spring?characterEncoding=UTF-8","enekelx1","enekeldytpq1Q@", true);
 		dao.setDataSource(dataSource);
 		
-		this.user1 = new User("enekelx1", "enekelx1", "123123",Level.BASIC,1,0);
-		this.user2 = new User("enekelx2", "enekelx2", "123123",Level.SILVER,55,10);
-		this.user3 = new User("enekelx3", "enekelx3", "123123",Level.GOLD,100,40);
+		this.user1 = new User("enekelx1", "enekelx1", "123123","enekelx1@gmail.com",Level.BASIC,1,0);
+		this.user2 = new User("enekelx2", "enekelx2", "123123","enekelx1@gmail.com",Level.SILVER,55,10);
+		this.user3 = new User("enekelx3", "enekelx3", "123123","enekelx1@gmail.com",Level.GOLD,100,40);
 	}
 
 	@Test
