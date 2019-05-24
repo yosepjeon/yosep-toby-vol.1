@@ -19,6 +19,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import io.yosep.toby.user.dao.UserDao;
+import io.yosep.toby.user.dao.UserDaoImpl;
 import io.yosep.toby.user.domain.Level;
 import io.yosep.toby.user.domain.User;
 
@@ -29,7 +30,7 @@ public class UserDaoTest {
 //	private ApplicationContext context;
 	
 	@Autowired
-	private UserDao dao;
+	private UserDaoImpl dao;
 	
 	private User user1;
 	private User user2;

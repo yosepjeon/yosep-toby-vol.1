@@ -1,7 +1,7 @@
 package io.yosep.toby.user.service;
 
-import static io.yosep.toby.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static io.yosep.toby.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
+import static io.yosep.toby.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static io.yosep.toby.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -35,7 +35,7 @@ import io.yosep.toby.user.service.UserService;
 @ContextConfiguration(locations = "classpath:io/yosep/toby/user/dao/user.xml")
 public class UserServiceTest {
 	@Autowired
-	UserService userService;
+	UserServiceImpl userService;
 	@Autowired
 	PlatformTransactionManager transactionManager;
 
@@ -64,20 +64,21 @@ public class UserServiceTest {
 	@Test
 	@DirtiesContext // => 컨텍스트의 DI 설정을 변경하는 테스트라는 것을 알려준다.
 	public void upgradeLevels() throws Exception {
-		userDao.deleteAll();
-		for (User user : users) {
-			userDao.add(user);
-		}
+		UserServiceImpl userServiceImpl = new UserServiceImpl(); // 고립된 테스트에서는 테스트 대상 오브젝트를 직접 생성하면 된다.
+		
+		MockUserDao mockUserDao = new MockUserDao(this.users);
+		userServiceImpl.setUserDao(mockUserDao);
+		
 		
 		MockMailSender mockMailSender = new MockMailSender();
 		userService.setMailSender(mockMailSender);
 
 		userService.upgradeLevels();
-		checkLevelUpgraded(users.get(0), false);
-		checkLevelUpgraded(users.get(1), true);
-		checkLevelUpgraded(users.get(2), false);
-		checkLevelUpgraded(users.get(3), true);
-		checkLevelUpgraded(users.get(4), false);
+		
+		List<User> updated = mockUserDao.getUpdated(); // MockUserDao로 부터 업데이트 결과를 가져온다.
+		assertThat(updated.size(), is(2));
+		checkUserAndLevel(updated.get(0), "joytouch", Level.SILVER);
+		checkUserAndLevel(updated.get(1), "madnite1", Level.GOLD);
 		
 		List<String> request = mockMailSender.getRequests();
 		assertThat(request.size(),is(2));
@@ -105,14 +106,18 @@ public class UserServiceTest {
 
 	@Test
 	public void upgradeAllOrNothing() throws Exception {
-		UserService testUserService = new TestUserService(users.get(3).getId());
-		testUserService.setUserDao(this.userDao);
-		testUserService.setTransactionManager(transactionManager);
+		TestUserService testUserService = new TestUserService(users.get(3).getId());
+		testUserService.setUserDao(userDao);
 		testUserService.setMailSender(mailSender);
-
+		
+		UserServiceTx txUserService = new UserServiceTx();
+		txUserService.setTransactionManager(transactionManager);
+		txUserService.setUserService(testUserService);
+		
 		userDao.deleteAll();
-		for (User user : users)
+		for(User user : users) {
 			userDao.add(user);
+		}
 
 		try {
 			testUserService.upgradeLevels();
@@ -121,6 +126,11 @@ public class UserServiceTest {
 		}
 
 		checkLevelUpgraded(users.get(1), false);
+	}
+	
+	private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+		assertThat(updated.getId(),is(expectedId));
+		assertThat(updated.getLevel(), is(expectedLevel));
 	}
 
 	private void checkLevel(User user, Level expectedLevel) throws SQLException {
@@ -138,7 +148,7 @@ public class UserServiceTest {
 		}
 	}
 
-	static class TestUserService extends UserService {
+	static class TestUserService extends UserServiceImpl {
 		private String id;
 
 		private TestUserService(String id) {
@@ -172,6 +182,58 @@ public class UserServiceTest {
 		public void send(SimpleMailMessage[] simpleMessages) throws MailException {
 			// TODO Auto-generated method stub
 			
+		}
+		
+	}
+	
+	static class MockUserDao implements UserDao {
+		private List<User> users; // 레벨 업그레이드 후보 User 오브젝트 목록
+		private List<User> updated = new ArrayList<User>(); // 업그레이드 대상 오브젝트를 저장해둘 목록
+		
+		private MockUserDao(List<User> users) {
+			this.users = users;
+		}
+		
+		public List<User> getUpdated() {
+			return this.updated;
+		}
+		
+		@Override
+		public void add(User user) throws SQLException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public User get(String id) throws SQLException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		// 스텁 기능 제공
+		@Override
+		public List<User> getAll() {
+			// TODO Auto-generated method stub
+			return this.users;
+		}
+
+		@Override
+		public void deleteAll() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public int getCount() throws SQLException {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		// 목 오브젝트 기능 제공
+		@Override
+		public void update(User user) {
+			// TODO Auto-generated method stub
+			updated.add(user);
 		}
 		
 	}
